@@ -9,7 +9,7 @@ import Foundation
 
 public struct RangeLineOffsetter: MarkupWalker {
     /// The line number of the first line in the line run that needs adjustment.
-    var offsetBy: Int
+    public var offsetBy: Int
 
     mutating public func defaultVisit(_ markup: Markup) {
         /// This should only be used in the parser where ranges are guaranteed
