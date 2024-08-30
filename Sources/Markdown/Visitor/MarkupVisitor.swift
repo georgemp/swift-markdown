@@ -1,7 +1,7 @@
 /*
  This source file is part of the Swift.org open source project
 
- Copyright (c) 2021 Apple Inc. and the Swift project authors
+ Copyright (c) 2021-2023 Apple Inc. and the Swift project authors
  Licensed under Apache License v2.0 with Runtime Library Exception
 
  See https://swift.org/LICENSE.txt for license information
@@ -13,7 +13,7 @@
 /// - note: This interface only provides requirements for visiting each kind of element. It does not require each visit method to descend into child elements.
 ///
 /// Generally, ``MarkupWalker`` is best for walking a ``Markup`` tree if the ``Result`` type is `Void` or is built up some other way, or ``MarkupRewriter`` for recursively changing a tree's structure. This type serves as a common interface to both. However, for building up other structured result types you can implement ``MarkupVisitor`` directly.
-public protocol MarkupVisitor {
+public protocol MarkupVisitor<Result> {
 
     /**
      The result type returned when visiting a element.
@@ -276,6 +276,22 @@ public protocol MarkupVisitor {
      mutating func visitInlineAttributes(_ attributes: InlineAttributes) -> Result
 
     /**
+     Visit a `DoxygenDiscussion` element and return the result.
+
+     - parameter doxygenDiscussion: A `DoxygenDiscussion` element.
+     - returns: The result of the visit.
+     */
+    mutating func visitDoxygenDiscussion(_ doxygenDiscussion: DoxygenDiscussion) -> Result
+
+    /**
+     Visit a `DoxygenNote` element and return the result.
+
+     - parameter doxygenNote: A `DoxygenNote` element.
+     - returns: The result of the visit.
+     */
+    mutating func visitDoxygenNote(_ doxygenNote: DoxygenNote) -> Result
+
+    /**
      Visit a `DoxygenParam` element and return the result.
 
      - parameter doxygenParam: A `DoxygenParam` element.
@@ -388,6 +404,12 @@ extension MarkupVisitor {
     }
     public mutating func visitInlineAttributes(_ attributes: InlineAttributes) -> Result {
         return defaultVisit(attributes)
+    }
+    public mutating func visitDoxygenDiscussion(_ doxygenDiscussion: DoxygenDiscussion) -> Result {
+        return defaultVisit(doxygenDiscussion)
+    }
+    public mutating func visitDoxygenNote(_ doxygenNote: DoxygenNote) -> Result {
+        return defaultVisit(doxygenNote)
     }
     public mutating func visitDoxygenParameter(_ doxygenParam: DoxygenParameter) -> Result {
         return defaultVisit(doxygenParam)

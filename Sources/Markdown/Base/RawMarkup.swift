@@ -35,7 +35,7 @@ enum RawMarkupData: Equatable {
     case image(source: String?, title: String?)
     case inlineHTML(String)
     case lineBreak
-    case link(destination: String?)
+    case link(destination: String?, title: String?)
     case softBreak
     case strong
     case text(String)
@@ -52,6 +52,8 @@ enum RawMarkupData: Equatable {
     case tableRow
     case tableCell(colspan: UInt, rowspan: UInt)
 
+    case doxygenDiscussion
+    case doxygenNote
     case doxygenParam(name: String)
     case doxygenReturns
 }
@@ -274,8 +276,8 @@ final class RawMarkup: ManagedBuffer<RawMarkupHeader, RawMarkup> {
         return .create(data: .lineBreak, parsedRange: parsedRange, children: [])
     }
 
-    static func link(destination: String?, parsedRange: SourceRange?, _ children: [RawMarkup]) -> RawMarkup {
-        return .create(data: .link(destination: destination), parsedRange: parsedRange, children: children)
+    static func link(destination: String?, title: String? = nil,parsedRange: SourceRange?, _ children: [RawMarkup]) -> RawMarkup {
+        return .create(data: .link(destination: destination, title: title), parsedRange: parsedRange, children: children)
     }
 
     static func softBreak(parsedRange: SourceRange?) -> RawMarkup {
@@ -332,6 +334,14 @@ final class RawMarkup: ManagedBuffer<RawMarkupHeader, RawMarkup> {
 
     static func tableCell(parsedRange: SourceRange?, colspan: UInt, rowspan: UInt, _ children: [RawMarkup]) -> RawMarkup {
         return .create(data: .tableCell(colspan: colspan, rowspan: rowspan), parsedRange: parsedRange, children: children)
+    }
+
+    static func doxygenDiscussion(parsedRange: SourceRange?, _ children: [RawMarkup]) -> RawMarkup {
+        return .create(data: .doxygenDiscussion, parsedRange: parsedRange, children: children)
+    }
+
+    static func doxygenNote(parsedRange: SourceRange?, _ children: [RawMarkup]) -> RawMarkup {
+        return .create(data: .doxygenNote, parsedRange: parsedRange, children: children)
     }
 
     static func doxygenParam(name: String, parsedRange: SourceRange?, _ children: [RawMarkup]) -> RawMarkup {
