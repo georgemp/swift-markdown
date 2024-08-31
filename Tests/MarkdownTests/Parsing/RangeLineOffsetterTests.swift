@@ -85,7 +85,7 @@ class RangeLineOffsetterTests: XCTestCase {
         let document = Document(parsing: text, source: nil, options: [.parseBlockDirectives, .parseSymbolLinks])
         XCTAssertEqual(expectedDump, document.debugDescription(options: .printSourceLocations))
 
-        var lineAdjuster = RangeLineOffsetter(offsetBy: 2, startLine: 1, skipToChildIndex: 1)
+        var lineAdjuster = RangeLineOffsetter(offsetBy: 2, startOffsetFromLine: 3, skipToChildIndex: 1)
         lineAdjuster.visit(document)
         let adjustedDump = """
         Document @1:1-13:6
@@ -127,7 +127,7 @@ class RangeLineOffsetterTests: XCTestCase {
         """
 
         let document = Document(parsing: text, source: nil, options: [.parseBlockDirectives, .parseSymbolLinks])
-        var lineAdjuster = RangeLineOffsetter(offsetBy: 2, startLine: 5, skipToChildIndex: 1)
+        var lineAdjuster = RangeLineOffsetter(offsetBy: 2, startOffsetFromLine: 5, skipToChildIndex: 1)
         lineAdjuster.visit(document)
         let adjustedDump = """
         Document @1:1-13:6

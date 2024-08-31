@@ -7,18 +7,25 @@
 
 import Foundation
 
+/*
+ Rules of operation:
+ 1. If a child of the root document is offset, then the document's range should also be updated.
+ 2. If any child node is offsetted, then the range of the child needs to be updated.
+ 3. Range of a element is offset only if it's lowerBound >= startOffsetFromLine
+ */
+
 public struct RangeLineOffsetter: MarkupWalker {
-    // Offset start of range only if it is less than startLine
-    public var startLine: Int
+    // Offset range of markup only if it's range is greater than or equal to startOffsetFromLine
+    public var startOffsetFromLine: Int
     // Number of children to skip before offsetting range
-    public var skipToChildIndex: Int
+    public var skipToChildIndex: Int?
     /// The number of lines to offset each line by.
     public var offsetBy: Int
 
-    public init(offsetBy: Int, startLine: Int = 1, skipToChildIndex: Int = 0) {
+    public init(offsetBy: Int, startOffsetFromLine: Int = 1, skipToChildIndex: Int? = nil) {
         self.offsetBy = offsetBy
         self.skipToChildIndex = skipToChildIndex
-        self.startLine = startLine
+        self.startOffsetFromLine = startOffsetFromLine
     }
 
     mutating public func defaultVisit(_ markup: Markup) {
@@ -26,28 +33,33 @@ public struct RangeLineOffsetter: MarkupWalker {
         /// to be filled in from cmark.
 
         let adjustedRange = markup.range.map { range -> SourceRange in
-            // If skipToChildIndex == 0, then the startLocation will remain the same as the original root of the document.
-            let start = startLine <= range.lowerBound.line ? SourceLocation(line: range.lowerBound.line + offsetBy, column: range.lowerBound.column, source: range.lowerBound.source) : range.lowerBound
-            let end = range.upperBound.line >= startLine ? SourceLocation(line: range.upperBound.line + offsetBy, column: range.upperBound.column, source: range.upperBound.source) : range.upperBound
+            let start = startOffsetFromLine <= range.lowerBound.line ? SourceLocation(line: range.lowerBound.line + offsetBy, column: range.lowerBound.column, source: range.lowerBound.source) : range.lowerBound
+            let end = startOffsetFromLine <= range.upperBound.line ? SourceLocation(line: range.upperBound.line + offsetBy, column: range.upperBound.column, source: range.upperBound.source) : range.upperBound
 
             return start..<end
         }
 
-        // Warning! Unsafe stuff!
-        // Unsafe mutation of shared reference types.
-        // This should only ever be called during parsing. -- from RangeAdjuster.swift
-        // Since, we need to do this, call this only immediately after parsing
-        // and before we do anything else with the Markup
-        markup.raw.markup.header.parsedRange = adjustedRange
+        var childrenToVisit = [Markup]()
+        if adjustedRange != markup.range {
+            // Warning! Unsafe stuff!
+            // Unsafe mutation of shared reference types.
+            // This should only ever be called during parsing. -- from RangeAdjuster.swift
+            // Since, we need to do this, call this only immediately after parsing
+            // and before we do anything else with the Markup
+            markup.raw.markup.header.parsedRange = adjustedRange
 
-        let children = markup.children.dropFirst(skipToChildIndex)
-
-        // We've updated the source range at root and skipped `skipToChildIndex` children. From, this point all the children need to be updated. So, we reset `skipToChildIndex` to 0.
-        skipToChildIndex = 0
-        for child in children {
-            child.accept(&self)
+            if let skipToChildIndex = skipToChildIndex {
+                childrenToVisit.append(contentsOf: markup.children.dropFirst(skipToChildIndex))
+            } else {
+                childrenToVisit.append(contentsOf: markup.children)
+            }
         }
 
+        // We've updated the source range at root and skipped `skipToChildIndex` children. From, this point all the children need to be updated. So, we reset `skipToChildIndex` to 0.
+        skipToChildIndex = nil
+        for child in childrenToVisit {
+            child.accept(&self)
+        }
         // End unsafe stuff.
     }
 }
